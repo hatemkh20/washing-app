@@ -12,19 +12,15 @@ import 'core/routing/routes.dart';
 import 'core/utils/observer.dart';
 import 'l10n/app_localizations.dart';
 
-
-
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
-GlobalKey<ScaffoldMessengerState>();
+    GlobalKey<ScaffoldMessengerState>();
 
 final GlobalKey<NavigatorState> globalNavigatorKey =
-GlobalKey<NavigatorState>();
+    GlobalKey<NavigatorState>();
 final RouteObserver<ModalRoute<void>> routeObserver =
-RouteObserver<ModalRoute<void>>();
+    RouteObserver<ModalRoute<void>>();
 
-
-
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Future.wait([
     setupGetIt(),
@@ -70,7 +66,9 @@ class MyApp extends StatelessWidget {
       supportedLocales: AppLocalizations.supportedLocales,
       locale: Locale("ar"),
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: AppColor.primaryLightColor),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColor.primaryLightColor,
+        ),
         scaffoldBackgroundColor: Color(0xfff9f9f9),
       ),
       initialRoute: Routes.splashScreen,

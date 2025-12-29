@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:clean_point/features/auth/data/model/user_date_request.dart';
 import 'package:dio/dio.dart';
 
 import '../../../../core/error/handel_error.dart';
@@ -9,12 +12,12 @@ class AuthDataSource {
   Future<Response> loginDataSource({
     required String phone,
     required String password,
-    required String type,
+    String? type,
   }) async {
     try {
       Response response = await DioFactory.dio!.post(
         ApiEndPoint.login,
-        data: {"phone": phone, "password": password, "type": type,},
+        data: {"phone": phone, "password": password},
       );
       return response;
     } on DioException catch (error) {
@@ -23,27 +26,26 @@ class AuthDataSource {
   }
 
   //! REGISTER
-  Future<Response> registerDataSource({
-    required String name,
-    required String email,
-    required String phone,
-    required String address,
-    required String password,
-    required String passwordConfirmation,
-    required int agreedOnTermsAt,
-  }) async {
+  Future<Response> registerDataSource({required UserDataRequest user}) async {
     try {
       Response response = await DioFactory.dio!.post(
         ApiEndPoint.register,
-        data: {
-          "name": name,
-          "email": email,
-          "phone": phone,
-          "address": address,
-          "password": password,
-          "password_confirmation": passwordConfirmation,
-          "agreed_on_terms_at" : agreedOnTermsAt,
-        },
+        data: user.toJson(),
+      );
+      return response;
+    } on DioException catch (error) {
+      return handleDioError(error);
+    }
+  }
+
+  Future<Response> checkUserDataSource({
+    required String phone,
+    required String email,
+  }) async {
+    try {
+      Response response = await DioFactory.dio!.post(
+        ApiEndPoint.checkUser,
+        data: {"phone": phone, "email": email},
       );
       return response;
     } on DioException catch (error) {
@@ -55,8 +57,8 @@ class AuthDataSource {
   Future<Response> forgetPasswordDataSource({required String phone}) async {
     try {
       Response response = await DioFactory.dio!.post(
-        ApiEndPoint.forgotPassword,
-        data: {"phone": phone, "type": "user"},
+        ApiEndPoint.checkUser,
+        data: {"phone": phone},
       );
       return response;
     } on DioException catch (error) {
@@ -67,12 +69,15 @@ class AuthDataSource {
   //! VERIFY ACCOUNT
   Future<Response> verifyCodeDataSource({
     required String phone,
-    required String code,
+    // required String code,
   }) async {
     try {
       Response response = await DioFactory.dio!.post(
         ApiEndPoint.verifyCode,
-        data: {"phone": phone, "code": code},
+        data: {
+          "phone": phone,
+          // "otp": code,
+        },
       );
       return response;
     } on DioException catch (error) {
@@ -81,20 +86,20 @@ class AuthDataSource {
   }
 
   //! verify password
-    Future<Response> verifyCodePasswordDataSource({
-      required String phone,
-      required String code,
-    }) async {
-      try {
-        Response response = await DioFactory.dio!.post(
-          ApiEndPoint.verifyCodePassword,
-          data: {"phone": phone, "code": code},
-        );
-        return response;
-      } on DioException catch (error) {
-        return handleDioError(error);
-      }
+  Future<Response> verifyCodePasswordDataSource({
+    required String phone,
+    required String code,
+  }) async {
+    try {
+      Response response = await DioFactory.dio!.post(
+        ApiEndPoint.verifyCodePassword,
+        data: {"phone": phone, "code": code},
+      );
+      return response;
+    } on DioException catch (error) {
+      return handleDioError(error);
     }
+  }
 
   //! RESEND CODE
   Future<Response> resendCodeDataSource({required String phone}) async {
@@ -120,9 +125,27 @@ class AuthDataSource {
         ApiEndPoint.resetPassword,
         data: {
           "phone": phone,
-          "type": "user",
-          "password": password,
-          "password_confirmation": passwordConfirmation,
+          // "type": "user",
+          "new_password": password,
+          // "password_confirmation": passwordConfirmation,
+        },
+      );
+      return response;
+    } on DioException catch (error) {
+      return handleDioError(error);
+    }
+  }
+
+  Future<Response> changePasswordDataSource({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      Response response = await DioFactory.dio!.post(
+        ApiEndPoint.resetPassword,
+        data: {
+          "current_password": currentPassword,
+          "new_password": newPassword,
         },
       );
       return response;
@@ -134,9 +157,7 @@ class AuthDataSource {
   //! LOGOUT
   Future<Response> logoutDataSource() async {
     try {
-      Response response = await DioFactory.dio!.post(
-        ApiEndPoint.logout,
-      );
+      Response response = await DioFactory.dio!.post(ApiEndPoint.logout);
       return response;
     } on DioException catch (error) {
       return handleDioError(error);
@@ -147,10 +168,70 @@ class AuthDataSource {
   Future<Response> fcmDataSource({required String fcmToken}) async {
     try {
       Response response = await DioFactory.dio!.put(
-          "/auth/fcm-token",
-          data :{
-            "fcm_token" : fcmToken,
-          }
+        "/auth/fcm-token",
+        data: {"fcm_token": fcmToken},
+      );
+      return response;
+    } on DioException catch (error) {
+      return handleDioError(error);
+    }
+  }
+
+  //! Get Profile
+  Future<Response> getProfileDataSource() async {
+    try {
+      Response response = await DioFactory.dio!.get(
+        ApiEndPoint.getAndUpdateProfile,
+      );
+      return response;
+    } on DioException catch (error) {
+      return handleDioError(error);
+    }
+  }
+
+  //! Update Profile
+  Future<Response> updateProfileDataSource({
+    required String name,
+    required String email,
+    required String phone,
+    File? avatar,
+  }) async {
+    try {
+      FormData formData = FormData.fromMap({
+        if (avatar != null)
+          "avatar": await MultipartFile.fromFile(
+            avatar.path,
+            filename: avatar.path.split('/').last.toString(),
+          ),
+        "name": name,
+        "email": email,
+        "phone": phone,
+      });
+      Response response = await DioFactory.dio!.post(
+        ApiEndPoint.getAndUpdateProfile,
+        data: formData,
+      );
+      return response;
+    } on DioException catch (error) {
+      return handleDioError(error);
+    }
+  }
+
+  Future<Response> contactUsDataSource({
+    required String name,
+    required String email,
+    required String phone,
+    required String message,
+  }) async {
+    try {
+      Response response = await DioFactory.dio!.post(
+        "/contact-us",
+        data: {
+          "name": name,
+          "email": email,
+          "phone": phone,
+          "message": message,
+        },
       );
       return response;
     } on DioException catch (error) {

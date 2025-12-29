@@ -1,4 +1,3 @@
-
 import 'package:clean_point/core/routing/routes.dart';
 import 'package:clean_point/core/utils/extensions.dart';
 import 'package:flutter/material.dart';
@@ -23,7 +22,6 @@ class ForgetPasswordScreen extends StatefulWidget {
 class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   late TextEditingController phoneController;
 
-
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   bool filed1 = true;
@@ -34,7 +32,6 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
   void initState() {
     super.initState();
     phoneController = TextEditingController();
-
   }
 
   @override
@@ -44,15 +41,15 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
     return Scaffold(
       // backgroundColor: AppColor.primaryColor,
       appBar: AppBar(
-        title: Text("نسيت كلمة المرور", style: getBoldStyle(color: AppColor.darkGreyColor3)),
+        title: Text(
+          "نسيت كلمة المرور",
+          style: getBoldStyle(color: AppColor.darkGreyColor3),
+        ),
         leading: Card(
           elevation: 0.0,
           color: Colors.transparent,
           shape: RoundedRectangleBorder(
-            side: BorderSide(
-              color: AppColor.darkGreyColor2,
-              width: 1.0,
-            ),
+            side: BorderSide(color: AppColor.darkGreyColor2, width: 1.0),
             borderRadius: BorderRadius.circular(15.0),
           ),
           child: IconButton(
@@ -60,7 +57,10 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
               if (!mounted) return;
               Navigator.pop(context);
             },
-            icon: Icon(Icons.arrow_back_ios_new, color:AppColor.darkGreyColor3),
+            icon: Icon(
+              Icons.arrow_back_ios_new,
+              color: AppColor.darkGreyColor3,
+            ),
           ),
         ),
         centerTitle: true,
@@ -69,9 +69,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
       ),
       body: Container(
         width: double.infinity,
-        height: MediaQuery
-            .sizeOf(context)
-            .height / 1,
+        height: MediaQuery.sizeOf(context).height / 1,
         padding: EdgeInsets.symmetric(horizontal: 15.0),
         child: SingleChildScrollView(
           child: Form(
@@ -82,13 +80,11 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                 20.ph,
                 Image.asset(
                   ImageApp.forget,
-                  height: MediaQuery
-                      .sizeOf(context)
-                      .height * 0.3,
+                  height: MediaQuery.sizeOf(context).height * 0.3,
                 ),
                 20.ph,
                 Text(
-                "لا تقلق! الرجاء إدخال رقم الجوال المرتبط بحسابك.",
+                  "لا تقلق! الرجاء إدخال رقم الجوال المرتبط بحسابك.",
                   style: getSemiBoldStyle(
                     color: AppColor.darkGreyColor3,
                     fontSize: 20.0,
@@ -128,10 +124,19 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
               listener: (context, state) async {
                 if (state is ForgetPasswordSuccess) {
                   toastSuccess(message: state.message.toString());
-                  if (!mounted) return;
-                  Navigator.pushNamed(context, Routes.otpPasswordCodeScreen , arguments: {
-                    "phone" : phoneController.text,
-                  });
+                  // if (!mounted) return;
+                  if (state.message.data.phoneExists) {
+                    Navigator.pushNamed(
+                      context,
+                      Routes.otpAccountCodeScreen,
+                      arguments: {
+                        "phone": phoneController.text.toString(),
+                        "user": null,
+                      },
+                    );
+                  } else {
+                    toastError(message: "رقم الهاتف هذا لا يوجد");
+                  }
                 }
                 if (state is ForgetPasswordError) {
                   toastError(message: state.failure.message.toString());
@@ -143,14 +148,12 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                     color: AppColor.primaryColor,
                   ).center;
                 }
-                return
-                  ButtonWidgetWithText(
+                return ButtonWidgetWithText(
                   onPressed: () {
                     if (formKey.currentState!.validate()) {
                       context.read<AuthCubit>().forgetPasswordCubit(
                         phone: phoneController.text,
                       );
-
                     }
                   },
                   txt: "استمرار",
@@ -164,9 +167,6 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
       ),
     );
   }
-
-
-
 
   @override
   void dispose() {

@@ -6,7 +6,6 @@ import 'package:clean_point/features/driver/driver_main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-
 import '../../../core/di/di.dart';
 import '../../../core/local/flutter_secure_manager.dart';
 import '../../../core/local/shared_prefs_manager.dart';
@@ -36,13 +35,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool openSecure = true;
 
-  void deleteToken ()async{
-    await FlutterSecureManager.deleteData(key: "token").then((value) => log("Done"),);
+  void deleteToken() async {
+    await FlutterSecureManager.deleteData(
+      key: "token",
+    ).then((value) => log("Done"));
     await FlutterSecureManager.deleteData(key: "driver");
-    setState(() {
-
-    });
+    setState(() {});
   }
+
   @override
   void initState() {
     deleteToken();
@@ -57,20 +57,24 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       // backgroundColor: AppColor.primaryColor,
       appBar: AppBar(
-        title: Text("تسجيل دخول", style: getBoldStyle(color:  AppColor.darkGreyColor3,)),
+        title: Text(
+          "تسجيل دخول",
+          style: getBoldStyle(color: AppColor.darkGreyColor3),
+        ),
         scrolledUnderElevation: 0.0,
         actions: [
           TextButton(
             onPressed: () async {
-              // await SharedPrefsManager.saveData(
-              //   key: "skip",
-              //   value: "isSkipping",
-              // );
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                Routes.mainScreen,
-                    (route) => false,
-              );
+              await SharedPrefsManager.saveData(
+                key: "skip",
+                value: "isSkipping",
+              ).then((value) {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  Routes.mainScreen,
+                  (route) => false,
+                );
+              });
             },
             child: Text(
               "تخطي",
@@ -104,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFieldWidget(
                   validator: (val) {
                     if (val.isEmpty) {
-                      return  "يرجي ارفاق رقم الهاتف";
+                      return "يرجي ارفاق رقم الهاتف";
                     } else {
                       return null;
                     }
@@ -120,11 +124,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFieldWidget(
                   validator: (val) {
                     if (val.isEmpty) {
-                      return  "يرجي ارفاق كلمة المرور"
-                          ;
+                      return "يرجي ارفاق كلمة المرور";
                     } else if (val.length < 8) {
-                      return  "يرجي ارفاق كلمة المرور لا تقل عن 8  احرف او ارقام"
-                          ;
+                      return "يرجي ارفاق كلمة المرور لا تقل عن 8  احرف او ارقام";
                     } else {
                       return null;
                     }
@@ -141,12 +143,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       });
                     },
                     icon:
-                    openSecure
-                        ? Image.asset(ImageApp.eyeClose)
-                        : Icon(
-                      Icons.remove_red_eye_rounded,
-                      color: AppColor.darkGreyColor2,
-                    ),
+                        openSecure
+                            ? Image.asset(ImageApp.eyeClose)
+                            : Icon(
+                              Icons.remove_red_eye_rounded,
+                              color: AppColor.darkGreyColor2,
+                            ),
                   ),
                 ),
                 5.ph,
@@ -181,51 +183,65 @@ class _LoginScreenState extends State<LoginScreen> {
             BlocProvider(
               create:
                   (context) =>
-                  AuthCubit(authRepository: getIt<AuthRepository>()),
+                      AuthCubit(authRepository: getIt<AuthRepository>()),
               child: BlocConsumer<AuthCubit, AuthState>(
                 listener: (context, state) async {
                   if (state is LoginSuccess) {
-                    if(state.loginModel.data.status.type == 0){
-                      // Navigator.push(context, MaterialPageRoute(builder: (context) => VerifyCodeScreen(
-                      //   phone: phoneController.text,
-                      // ),));
-                      Navigator.pushNamed(context, Routes.otpAccountCodeScreen , arguments: {
-                        "phone" : phoneController.text,
-                      });
-                    }
-                    if (state.loginModel.data.role == "user") {
+                    // if (state.loginModel.statues == 0) {
+                    //   // Navigator.push(context, MaterialPageRoute(builder: (context) => VerifyCodeScreen(
+                    //   //   phone: phoneController.text,
+                    //   // ),));
+                    //   Navigator.pushNamed(
+                    //     context,
+                    //     Routes.otpAccountCodeScreen,
+                    //     arguments: {"phone": phoneController.text},
+                    //   );
+                    // }
+
+                    if (state.loginModel.data.user.type == "user") {
+                      log(state.loginModel.data.user.token.toString());
                       await FlutterSecureManager.writeData(
                         key: "token",
-                        value: state.loginModel.data.token.toString(),
+                        value: state.loginModel.data.user.token.toString(),
                       ).then((value) async {
                         toastSuccess(
                           message:
-                          state.loginModel.message.toString().isEmpty
-                              ? "تم تسجيل الدخول بنجاح"
-                              : state.loginModel.message.toString(),
+                              state.loginModel.message.toString().isEmpty
+                                  ? "تم تسجيل الدخول بنجاح"
+                                  : state.loginModel.message.toString(),
                         );
                         await SharedPrefsManager.removeData(key: "skip");
                         Navigator.pushNamedAndRemoveUntil(
                           context,
                           Routes.mainScreen,
-                              (route) => false,
+                          (route) => false,
                         );
                       });
-                    }else {
+                    } else {
                       await FlutterSecureManager.writeData(
                         key: "token",
-                        value: state.loginModel.data.token.toString(),
+                        value: state.loginModel.data.user.token.toString(),
                       ).then((value) async {
                         toastSuccess(
                           message:
-                          state.loginModel.message.toString().isEmpty
-                              ? "تم تسجيل الدخول بنجاح"
-                              : state.loginModel.message.toString(),
+                              state.loginModel.message.toString().isEmpty
+                                  ? "تم تسجيل الدخول بنجاح"
+                                  : state.loginModel.message.toString(),
                         );
                         await SharedPrefsManager.removeData(key: "skip");
-                        Navigator.pushNamedAndRemoveUntil(context, Routes.mainScreen,(route) => false,);
+                        // Navigator.pushNamedAndRemoveUntil(
+                        //   context,
+                        //   Routes.mainScreen,
+                        //   (route) => false,
+                        // );
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DriverMainScreen(),
+                          ),
+                          (route) => false,
+                        );
                       });
-
                     }
                   }
 
@@ -237,12 +253,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     //     toastError(message: "كلمة المرور غير صحيحة");
                     //   }
                     // });
-                    toastError(message:
-                        (state.failure.data!= null)
-                        ? state.failure.getAllErrorMessages()
-                        : state.failure.message.toString());
+                    toastError(
+                      message:
+                          (state.failure.data != null)
+                              ? state.failure.getAllErrorMessages()
+                              : state.failure.message.toString(),
+                    );
                   }
-
                 },
                 builder: (context, state) {
                   if (state is LoginLoading) {
@@ -250,94 +267,76 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: AppColor.primaryColor,
                     ).center;
                   }
-                  return
-              ButtonWidgetWithText(
+                  return ButtonWidgetWithText(
                     onPressed: () {
                       if (formKey.currentState!.validate()) {
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              backgroundColor: Colors.transparent,
-                              elevation: 0.0,
-                              content: SizedBox(
-                                width: MediaQuery.sizeOf(context).width * 0.8,
-                                child: Card(
-                                  elevation: 0.0,
-                                  color: Colors.white,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(20.0),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      spacing: 20.0,
-                                      children: [
-                                        Text(
-                                           "اختر نوع الحساب",
-                                          style: getBoldStyle(
-                                            color: Colors.black,
-                                            fontSize: 18.0,
-                                          ),
-                                        ),
-                                        ButtonWidgetWithText(
-                                          onPressed: () {
-                                            Navigator.pop(context,"user" );
-                                          },
-                                          txt:
-                                           "مستخدم"
-                                              ,
-                                          backgroundColor: AppColor.primaryColor,
-                                        ),
-                                        ButtonWidgetWithText(
-                                          onPressed: () {
-                                            Navigator.pop(context, 'driver');
-                                          },
-                                          txt:
-                                          "المندوب",
-                                          borderColor: AppColor.primaryColor,
-                                          backgroundColor: Colors.white,
-                                          colorText: AppColor.primaryColor,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ).then((value) {
-                          if (value != null) {
-                            debugPrint("الاختيار: $value");
+                        //   showDialog(
+                        //     context: context,
+                        //     builder: (context) {
+                        //       return AlertDialog(
+                        //         backgroundColor: Colors.transparent,
+                        //         elevation: 0.0,
+                        //         content: SizedBox(
+                        //           width: MediaQuery.sizeOf(context).width * 0.8,
+                        //           child: Card(
+                        //             elevation: 0.0,
+                        //             color: Colors.white,
+                        //             child: Padding(
+                        //               padding: const EdgeInsets.all(20.0),
+                        //               child: Column(
+                        //                 mainAxisSize: MainAxisSize.min,
+                        //                 spacing: 20.0,
+                        //                 children: [
+                        //                   Text(
+                        //                      "اختر نوع الحساب",
+                        //                     style: getBoldStyle(
+                        //                       color: Colors.black,
+                        //                       fontSize: 18.0,
+                        //                     ),
+                        //                   ),
+                        //                   ButtonWidgetWithText(
+                        //                     onPressed: () {
+                        //                       Navigator.pop(context,"user" );
+                        //                     },
+                        //                     txt:
+                        //                      "مستخدم"
+                        //                         ,
+                        //                     backgroundColor: AppColor.primaryColor,
+                        //                   ),
+                        //                   ButtonWidgetWithText(
+                        //                     onPressed: () {
+                        //                       Navigator.pop(context, 'driver');
+                        //                     },
+                        //                     txt:
+                        //                     "المندوب",
+                        //                     borderColor: AppColor.primaryColor,
+                        //                     backgroundColor: Colors.white,
+                        //                     colorText: AppColor.primaryColor,
+                        //                   ),
+                        //                 ],
+                        //               ),
+                        //             ),
+                        //           ),
+                        //         ),
+                        //       );
+                        //     },
+                        //   ).then((value) {
+                        //     if (value != null) {
+                        //       debugPrint("الاختيار: $value");
+                        //
+                        //
+                        //     }
+                        //   },);
 
-                            if(value == "user"){
-                              context.read<AuthCubit>().loginCubit(
-                                phone: phoneController.text,
-                                password: passwordController.text,
-                                type: value.toString(),
-                              ).then((value) {
-                                Navigator.pushNamedAndRemoveUntil(context, Routes.mainScreen,(route) => false,);
-                              },);
-
-                            }else {
-                              context.read<AuthCubit>().loginCubit(
-                                phone: phoneController.text,
-                                password: passwordController.text,
-                                type: value.toString(),
-                              ).then((value) {
-                                Navigator.pushAndRemoveUntil(context,
-                                  MaterialPageRoute(builder: (context) => DriverMainScreen(),),
-                                      (route) => false,);
-                              },);
-
-                            }
-
-                          }
-                        },);
+                        context.read<AuthCubit>().loginCubit(
+                          phone: phoneController.text,
+                          password: passwordController.text,
+                        );
                       }
                     },
                     txt: "تسجيل دخول",
                     backgroundColor: AppColor.primaryColor,
-                  )
-    ;
+                  );
                 },
               ),
             ),
