@@ -1,5 +1,8 @@
+import 'dart:developer';
+
 import 'package:clean_point/core/routing/routes.dart';
 import 'package:clean_point/core/utils/extensions.dart';
+import 'package:clean_point/features/auth/data/model/user_date_request.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -50,15 +53,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return Scaffold(
       // backgroundColor: AppColor.primaryColor,
       appBar: AppBar(
-        title: Text("حساب جديد", style: getBoldStyle(color: AppColor.darkGreyColor3)),
+        title: Text(
+          "حساب جديد",
+          style: getBoldStyle(color: AppColor.darkGreyColor3),
+        ),
         leading: Card(
           elevation: 0.0,
           color: Colors.transparent,
           shape: RoundedRectangleBorder(
-            side: BorderSide(
-              color: AppColor.darkGreyColor2,
-              width: 1.0,
-            ),
+            side: BorderSide(color: AppColor.darkGreyColor2, width: 1.0),
             borderRadius: BorderRadius.circular(15.0),
           ),
           child: IconButton(
@@ -66,7 +69,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
               if (!mounted) return;
               Navigator.pop(context);
             },
-            icon: Icon(Icons.arrow_back_ios_new, color:AppColor.darkGreyColor3),
+            icon: Icon(
+              Icons.arrow_back_ios_new,
+              color: AppColor.darkGreyColor3,
+            ),
           ),
         ),
         centerTitle: true,
@@ -94,8 +100,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 TextFieldWidget(
                   validator: (val) {
                     if (val.isEmpty) {
-                      return  "يرجي ارفاق الاسم"
-                       ;
+                      return "يرجي ارفاق الاسم";
                     } else {
                       return null;
                     }
@@ -111,8 +116,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 TextFieldWidget(
                   validator: (val) {
                     if (val.isEmpty) {
-                      return  "يرجي ارفاق رقم الجوال"
-                          ;
+                      return "يرجي ارفاق رقم الجوال";
                     } else {
                       return null;
                     }
@@ -128,8 +132,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 TextFieldWidget(
                   validator: (val) {
                     if (val.isEmpty) {
-                      return "يرجي ارفاق بريدك الالكتروني"
-                         ;
+                      return "يرجي ارفاق بريدك الالكتروني";
                     } else {
                       return null;
                     }
@@ -142,32 +145,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   prefixIcon: Image.asset(ImageApp.email),
                 ),
                 // 20.ph,
-                TextFieldWidget(
-                  validator: (val) {
-                    if (val.isEmpty) {
-                      return "يرجي ارفاق ادخل العنوان"
-                          ;
-                    } else {
-                      return null;
-                    }
-                  },
-                  controller: addressController,
-                  // keyBoardType: TextInputType.phone,
-                  hintText: "ادخل العنوان",
-                  obscureText: false,
-                  maxLine: 2,
-                  onChange: (val) {},
-                  prefixIcon: Image.asset(ImageApp.map),
-                ),
+                // TextFieldWidget(
+                //   validator: (val) {
+                //     if (val.isEmpty) {
+                //       return "يرجي ارفاق ادخل العنوان"
+                //           ;
+                //     } else {
+                //       return null;
+                //     }
+                //   },
+                //   controller: addressController,
+                //   // keyBoardType: TextInputType.phone,
+                //   hintText: "ادخل العنوان",
+                //   obscureText: false,
+                //   maxLine: 2,
+                //   onChange: (val) {},
+                //   prefixIcon: Image.asset(ImageApp.map),
+                // ),
                 // 20.ph,
                 TextFieldWidget(
                   validator: (val) {
                     if (val.isEmpty) {
-                      return  "يرجي ارفاق كلمة المرور"
-                          ;
+                      return "يرجي ارفاق كلمة المرور";
                     } else if (val.length < 8) {
-                      return  "يرجي ارفاق كلمة المرور لا تقل عن 8 احرف او ارقام"
-                          ;
+                      return "يرجي ارفاق كلمة المرور لا تقل عن 8 احرف او ارقام";
                     } else {
                       return null;
                     }
@@ -184,12 +185,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       });
                     },
                     icon:
-                    openSecure
-                        ? Image.asset(ImageApp.eyeClose)
-                        : Icon(
-                      Icons.remove_red_eye_rounded,
-                      color: AppColor.darkGreyColor2,
-                    ),
+                        openSecure
+                            ? Image.asset(ImageApp.eyeClose)
+                            : Icon(
+                              Icons.remove_red_eye_rounded,
+                              color: AppColor.darkGreyColor2,
+                            ),
                   ),
                 ),
                 // 5.ph,
@@ -249,16 +250,34 @@ class _SignUpScreenState extends State<SignUpScreen> {
             BlocProvider(
               create:
                   (context) =>
-                  AuthCubit(authRepository: getIt<AuthRepository>()),
+                      AuthCubit(authRepository: getIt<AuthRepository>()),
               child: BlocConsumer<AuthCubit, AuthState>(
                 listener: (context, state) async {
-                  if (state is RegisterSuccess) {
-                    toastSuccess(message: "تم تسجيل الحساب بنجاح");
-                    Navigator.pushNamed(context, Routes.otpAccountCodeScreen, arguments: {
-                      "phone" : phoneController.text,
-                    });
+                  if (state is CheckUserSuccess) {
+                    if (state.message.data.emailExists) {
+                      toastError(message: "الايميل هذا مستخدم من قبل");
+                    } else if (state.message.data.phoneExists) {
+                      toastError(message: "رقم الهاتف هذا مستخدم من قبل");
+                    } else {
+                      toastSuccess(message: "تم بنجاح");
+                      final user = UserDataRequest(
+                        name: nameController.text,
+                        email: emailController.text,
+                        phone: phoneController.text,
+                        address:
+                            addressController.text.isEmpty
+                                ? ""
+                                : addressController.text,
+                        password: passwordController.text,
+                      );
+                      Navigator.pushNamed(
+                        context,
+                        Routes.otpAccountCodeScreen,
+                        arguments: {"phone": user.phone, "user": user},
+                      );
+                    }
                   }
-                  if (state is RegisterError) {
+                  if (state is CheckUserError) {
                     state.failure.data?.forEach((key, value) {
                       if (key == "phone") {
                         toastError(message: "رقم الهاتف هذا مستخدم من قبل");
@@ -270,27 +289,43 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   }
                 },
                 builder: (context, state) {
-                  if (state is RegisterLoading) {
+                  if (state is CheckUserLoading) {
                     return CircularProgressIndicator(
                       color: AppColor.primaryColor,
                     ).center;
                   }
-                  return
-    ButtonWidgetWithText(
+                  return ButtonWidgetWithText(
                     onPressed: () {
                       if (formKey.currentState!.validate()) {
                         if (checkBox) {
-                          context.read<AuthCubit>().registerCubit(
+                          final user = UserDataRequest(
                             name: nameController.text,
                             email: emailController.text,
                             phone: phoneController.text,
-                            address: addressController.text,
+                            address:
+                                addressController.text.isEmpty
+                                    ? ""
+                                    : addressController.text,
                             password: passwordController.text,
-                            passwordConfirmation: passwordController.text,
-                            agreedOnTermsAt: checkBox ? 1 : 0,
                           );
-                        }else{
-                          toastWarning(message: "يرجي الموافقة علي الشروط والاحكام");
+                          log(user.toString());
+                          // context.read<AuthCubit>().registerCubit(
+                          //   user: UserDataRequest(
+                          //     name: nameController.text,
+                          //     email: emailController.text,
+                          //     phone: phoneController.text,
+                          //     address: addressController.text,
+                          //     password: passwordController.text,
+                          //   ),
+                          // );
+                          context.read<AuthCubit>().checkUserCubit(
+                            phone: phoneController.text,
+                            email: emailController.text,
+                          );
+                        } else {
+                          toastWarning(
+                            message: "يرجي الموافقة علي الشروط والاحكام",
+                          );
                         }
                       }
                     },
@@ -304,7 +339,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  "لديك حساب؟ " ,
+                  "لديك حساب؟ ",
                   style: getBoldStyle(color: Colors.black, fontSize: 16.0),
                 ),
                 TextButton(

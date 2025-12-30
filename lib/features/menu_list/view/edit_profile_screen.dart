@@ -324,7 +324,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         name: usernameController.text,
                         email: emailController.text,
                         phone: phoneController.text,
-                        avatar: File(imageFile.toString()),
+                        avatar:(imageFile != null) ? File(imageFile.toString()) : null,
                       );
                     }
                   },

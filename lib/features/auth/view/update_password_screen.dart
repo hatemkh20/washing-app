@@ -12,15 +12,15 @@ import '../../../core/utils/image_app.dart';
 import '../../../core/utils/toast.dart';
 import '../../../l10n/app_localizations.dart';
 
-class ChangePasswordScreen extends StatefulWidget {
-  const ChangePasswordScreen({Key? key}) : super(key: key);
+class UpdatePasswordScreen extends StatefulWidget {
+  const UpdatePasswordScreen({Key? key}) : super(key: key);
 
   @override
-  State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
+  State<UpdatePasswordScreen> createState() => _UpdatePasswordScreenState();
 }
 
-class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
-  late TextEditingController phoneController;
+class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
+  late TextEditingController currentPasswordController;
   late TextEditingController newPasswordController;
   late TextEditingController confirmNewPasswordController;
 
@@ -33,7 +33,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   @override
   void initState() {
     super.initState();
-    phoneController = TextEditingController();
+    currentPasswordController = TextEditingController();
     confirmNewPasswordController = TextEditingController();
     newPasswordController = TextEditingController();
   }
@@ -67,7 +67,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         scrolledUnderElevation: 0.0,
         backgroundColor: Colors.transparent,
         title: Text(
-          (checkLang == "ar") ? "إعادة تعيين كلمة المرور" : "Edit Password",
+          (checkLang == "ar") ? " تغيير كلمةالمرور" : "Edit Password",
           style: getBoldStyle(color: AppColor.darkGreyColor3, fontSize: 18.0),
         ),
         centerTitle: true,
@@ -86,14 +86,17 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 validator: (val) {
                   if (val.isEmpty) {
                     return (checkLang == "ar")
-                        ? "يرجي ارفاق رقم الهاتف"
+                        ? "يرجي ارفاق كلمة المرور الحالية"
                         : "Please attach your old password";
                   } else {
                     return null;
                   }
                 },
-                controller: phoneController,
-                hintText: (checkLang == "ar") ? "رقم الهاتف" : "Phone Number",
+                controller: currentPasswordController,
+                hintText:
+                    (checkLang == "ar")
+                        ? "كلمة المرور الحالية"
+                        : "Phone Number",
                 obscureText: openSecure,
                 onChange: (val) {},
                 fillColor: Colors.white,
@@ -198,12 +201,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               listener: (context, state) {
                 if (state is ResetPasswordSuccess) {
                   toastSuccess(message: state.message.toString());
-                  // context.pop();
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    Routes.loginScreen,
-                    (route) => false,
-                  );
+                  context.pop();
                 } else if (state is ResetPasswordError) {
                   toastError(message: state.failure.message.toString());
                   state.failure.data?.forEach((key, value) {
@@ -230,11 +228,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         toastError(message: "كلمة المرور غير متطابقة");
                         return;
                       } else {
-                        context.read<AuthCubit>().resetPasswordCubit(
-                          phone: phoneController.text,
-                          password: newPasswordController.text,
-                          passwordConfirmation:
-                              confirmNewPasswordController.text,
+                        context.read<AuthCubit>().updatePasswordCubit(
+                          currentPassword: currentPasswordController.text,
+                          newPassword: newPasswordController.text,
                         );
                       }
                     }
@@ -244,13 +240,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 );
               },
             ),
-            // ButtonWidgetWithText(
-            //   onPressed: () {
-            //     if (formKey.currentState!.validate()) {}
-            //   },
-            //   txt: (checkLang == "ar") ? "حفظ" :"Save",
-            //   backgroundColor: AppColor.lightCynColor,
-            // ),
+
             15.ph,
           ],
         ),
@@ -260,7 +250,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   @override
   void dispose() {
-    phoneController.dispose();
+    currentPasswordController.dispose();
     confirmNewPasswordController.dispose();
     newPasswordController.dispose();
     super.dispose();

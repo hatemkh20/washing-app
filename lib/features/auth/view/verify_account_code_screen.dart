@@ -1,27 +1,27 @@
 import 'dart:developer';
 
+import 'package:clean_point/core/local/flutter_secure_manager.dart';
 import 'package:clean_point/core/utils/extensions.dart';
+import 'package:clean_point/features/auth/data/model/user_date_request.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
-
 import '../../../core/routing/routes.dart';
 import '../../../core/shared/button_widget_with_text.dart';
 import '../../../core/style/app_color.dart';
 import '../../../core/style/app_font_style.dart';
 import '../../../core/utils/image_app.dart';
 import '../../../core/utils/toast.dart';
-import '../../../l10n/app_localizations.dart';
 import '../cubit/auth_cubit.dart';
-
 
 class VerifyAccountCodeScreen extends StatefulWidget {
   final String phone;
-
-  const VerifyAccountCodeScreen({super.key, required this.phone});
+  final UserDataRequest? user;
+  const VerifyAccountCodeScreen({super.key, required this.phone, this.user});
 
   @override
-  State<VerifyAccountCodeScreen> createState() => _VerifyAccountCodeScreenState();
+  State<VerifyAccountCodeScreen> createState() =>
+      _VerifyAccountCodeScreenState();
 }
 
 class _VerifyAccountCodeScreenState extends State<VerifyAccountCodeScreen> {
@@ -30,18 +30,25 @@ class _VerifyAccountCodeScreenState extends State<VerifyAccountCodeScreen> {
 
   @override
   void initState() {
+    context.read<AuthCubit>().verifyCodeCubit(phone: widget.phone).then((
+      value,
+    ) {
+      log('verify account code screen');
+    });
     super.initState();
+
     pinCodeController = TextEditingController();
+    // pinCodeController.text = widget.phone;
   }
+
   @override
   Widget build(BuildContext context) {
-    var text = AppLocalizations.of(context);
-    String checkLang = Localizations.localeOf(context).toString();
+    log(widget.phone);
     return Scaffold(
-      backgroundColor: AppColor.primaryColor,
+      // backgroundColor: AppColor.primaryColor,
       appBar: AppBar(
         title: Text(
-          "التحقق من  كلمة المرور",
+          "التحقق من الحساب",
           style: getBoldStyle(color: AppColor.darkGreyColor3),
         ),
         scrolledUnderElevation: 0.0,
@@ -49,10 +56,7 @@ class _VerifyAccountCodeScreenState extends State<VerifyAccountCodeScreen> {
           elevation: 0.0,
           color: Colors.transparent,
           shape: RoundedRectangleBorder(
-            side: BorderSide(
-              color: AppColor.darkGreyColor2,
-              width: 1.0,
-            ),
+            side: BorderSide(color: AppColor.darkGreyColor2, width: 1.0),
             borderRadius: BorderRadius.circular(15.0),
           ),
           child: IconButton(
@@ -60,7 +64,10 @@ class _VerifyAccountCodeScreenState extends State<VerifyAccountCodeScreen> {
               if (!mounted) return;
               Navigator.pop(context);
             },
-            icon: Icon(Icons.arrow_back_ios_new, color:AppColor.darkGreyColor3),
+            icon: Icon(
+              Icons.arrow_back_ios_new,
+              color: AppColor.darkGreyColor3,
+            ),
           ),
         ),
         centerTitle: true,
@@ -86,19 +93,66 @@ class _VerifyAccountCodeScreenState extends State<VerifyAccountCodeScreen> {
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Container(
-            //   height: 3.0,
-            //   width: 100,
-            //   decoration: BoxDecoration(
-            //     borderRadius: BorderRadius.circular(5.0),
-            //     color: AppColor.darkGreyColor2,
-            //   ),
-            // ),
+            BlocBuilder<AuthCubit, AuthState>(
+              builder: (context, state) {
+                return (state is VerifyCodeLoading)
+                    ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: 10.0,
+                      children: [
+                        Text(
+                          'في انتظار ارسال كود التفعيل....',
+                          style: getMediumStyle(color: AppColor.redColor),
+                        ),
+                        CircularProgressIndicator().center,
+                      ],
+                    )
+                    : Container();
+              },
+            ),
+            BlocListener<AuthCubit, AuthState>(
+              listener: (context, state) {
+                if (state is RegisterLoading) {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext dialogContext) {
+                      return AlertDialog(
+                        title: Text(
+                          'في انتظار تسجيل الحساب',
+                          style: getMediumStyle(color: AppColor.primaryColor),
+                        ),
+                        content: SizedBox(
+                          width: 100,
+                          height: 100,
+                          child: CircularProgressIndicator().center,
+                        ),
+                      );
+                    },
+                  );
+                }
+                if (state is RegisterSuccess) {
+                  FlutterSecureManager.writeData(
+                    key: "token",
+                    value: state.message.data.user.token.toString(),
+                  );
+                  toastSuccess(message: state.message.message.toString());
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    Routes.mainScreen,
+                    (route) => false,
+                  );
+                  // Navigator.pop(context);
+                }
+                if (state is RegisterError) {
+                  Navigator.pop(context);
+                  toastError(message: state.failure.message.toString());
+                }
+              },
+              child: SizedBox.shrink(),
+            ),
             Image.asset(
               ImageApp.verify,
-              height: MediaQuery
-                  .sizeOf(context)
-                  .height * 0.4,
+              height: MediaQuery.sizeOf(context).height * 0.4,
             ),
             10.ph,
             Text(
@@ -131,8 +185,7 @@ class _VerifyAccountCodeScreenState extends State<VerifyAccountCodeScreen> {
                 fieldWidth: 55,
                 borderWidth: 1.5,
                 activeColor: AppColor.primaryLightColor,
-                inactiveColor: AppColor.darkGreyColor3.withOpacity(
-                    0.2),
+                inactiveColor: AppColor.darkGreyColor3.withOpacity(0.2),
                 inactiveFillColor: Colors.white,
                 // AppColor.darkGreyColor2.withOpacity(
                 //   0.2,
@@ -158,66 +211,93 @@ class _VerifyAccountCodeScreenState extends State<VerifyAccountCodeScreen> {
             20.ph,
             BlocConsumer<AuthCubit, AuthState>(
               listener: (context, state) async {
-                if (state is VerifyCodeSuccess) {
+                if (state is VerifyCodePasswordSuccess) {
                   toastSuccess(message: state.message.toString());
-                  if (!mounted) return;
-                  Navigator.pushNamedAndRemoveUntil(context, Routes.loginScreen, (route) => false,);
+                  // if (!mounted) return;
+                  // Navigator.pushNamedAndRemoveUntil(
+                  //   context,
+                  //   Routes.mainScreen,
+                  //   (route) => false,
+                  // );
+                  if (widget.user != null) {
+                    context.read<AuthCubit>().registerCubit(user: widget.user!);
+                  } else {
+                    toastSuccess(message: "تم التحقق من الحساب بنجاح");
+                    Navigator.pushNamed(context, Routes.changePassword);
+                  }
+
+                  // showDialog(
+                  //   context: context,
+                  //   builder: (BuildContext dialogContext) {
+                  //     return AlertDialog(
+                  //       title: const Text('في انتظار ارسال كود التفعيل'),
+                  //       content: SizedBox(
+                  //         width: 100,
+                  //         height: 100,
+                  //         child:
+                  //             Column(
+                  //               mainAxisSize: MainAxisSize.min,
+                  //               children: [
+                  //                 const Text('في انتظار تسجيل الحساب'),
+                  //                 CircularProgressIndicator(),
+                  //               ],
+                  //             ).center,
+                  //       ),
+                  //     );
+                  //   },
+                  // );
                 }
-                if (state is VerifyCodeError) {
-                  toastError(
-                      message: state.failure.message.toString());
+                if (state is VerifyCodePasswordError) {
+                  toastError(message: state.failure.message.toString());
                 }
               },
               builder: (context, state) {
-                if (state is VerifyCodeLoading) {
+                if (state is VerifyCodePasswordLoading) {
                   return CircularProgressIndicator(
                     color: AppColor.primaryColor,
                   ).center;
                 }
-                return
-            ButtonWidgetWithText(
-              onPressed: () {
-                if (pinCodeController.text.isNotEmpty) {
-                  context.read<AuthCubit>().verifyCodeCubit(
-                    phone: widget.phone,
-                    code: pinCodeController.text,
-                  );
-                }
-              },
-              txt: "تحقق",
-              backgroundColor: AppColor.primaryColor,
-            );
+                return ButtonWidgetWithText(
+                  onPressed: () {
+                    if (pinCodeController.text.isNotEmpty) {
+                      context.read<AuthCubit>().verifyCodePasswordCubit(
+                        phone: widget.phone,
+                        code: pinCodeController.text,
+                      );
+                    }
+                  },
+                  txt: "تحقق",
+                  backgroundColor: AppColor.primaryColor,
+                );
               },
             ),
 
             10.ph,
             BlocConsumer<AuthCubit, AuthState>(
               listener: (context, state) async {
-                if (state is ResendCodeSuccess) {
+                if (state is VerifyCodeSuccess) {
                   toastSuccess(message: state.message.toString());
                 }
-                if (state is ResendCodeError) {
-                  toastError(
-                      message: state.failure.message.toString());
+                if (state is VerifyCodeError) {
+                  toastError(message: state.failure.message.toString());
                 }
               },
               builder: (context, state) {
-                if (state is ResendCodeLoading) {
+                if (state is VerifyCodeLoading2) {
                   return CircularProgressIndicator(
                     color: AppColor.primaryColor,
                   ).center;
                 }
-                return
-            ButtonWidgetWithText(
-              onPressed: () {
-                context.read<AuthCubit>().resendCodeCubit(
-                  phone: widget.phone,
+                return ButtonWidgetWithText(
+                  onPressed: () {
+                    context.read<AuthCubit>().verifyCodeCubit(
+                      phone: widget.phone,
+                      isLoading2: true,
+                    );
+                  },
+                  txt: "اعاده ارسال",
+                  backgroundColor: AppColor.primaryLightColor,
                 );
-              },
-              txt:  "اعاده ارسال"
-              ,
-              backgroundColor: AppColor.primaryLightColor,
-            );
               },
             ),
           ],
@@ -226,6 +306,7 @@ class _VerifyAccountCodeScreenState extends State<VerifyAccountCodeScreen> {
       // ),
     );
   }
+
   @override
   void dispose() {
     pinCodeController.dispose();

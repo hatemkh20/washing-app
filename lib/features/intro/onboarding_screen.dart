@@ -7,6 +7,8 @@ import 'package:clean_point/core/utils/image_app.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/local/flutter_secure_manager.dart';
+
 class OnBoardingScreen extends StatelessWidget {
   const OnBoardingScreen({super.key});
 
@@ -36,8 +38,14 @@ class OnBoardingScreen extends StatelessWidget {
             ),
             23.ph,
             ButtonWidgetWithText(
-                onPressed: () {
-                  Navigator.pushNamedAndRemoveUntil(context, Routes.loginScreen, (route) => false,);
+                onPressed: () async{
+                  await FlutterSecureManager.writeData(
+                    key: "onBoard",
+                    value: "1",
+                  ).then((value) {
+                    Navigator.pushNamedAndRemoveUntil(context, Routes.loginScreen, (route) => false,);
+                  },);
+
                 },
                 txt: "التالي",
                 backgroundColor: AppColor.primaryColor,

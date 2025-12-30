@@ -2,12 +2,16 @@ import 'dart:developer';
 import 'package:clean_point/core/di/di.dart';
 import 'package:clean_point/core/routing/routes.dart';
 import 'package:clean_point/features/auth/cubit/auth_cubit.dart';
+import 'package:clean_point/features/auth/data/model/user_date_request.dart';
 import 'package:clean_point/features/auth/data/repository/auth_repository.dart';
 import 'package:clean_point/features/auth/view/change_password_screen.dart';
 import 'package:clean_point/features/auth/view/forget_password_screen.dart';
 import 'package:clean_point/features/auth/view/login_screen.dart';
 import 'package:clean_point/features/auth/view/signup_screen.dart';
+import 'package:clean_point/features/auth/view/update_password_screen.dart';
 import 'package:clean_point/features/auth/view/verify_password_code_screen.dart';
+import 'package:clean_point/features/home/cubit/home_cubit.dart';
+import 'package:clean_point/features/home/data/repository/home_repository.dart';
 import 'package:clean_point/features/intro/onboarding_screen.dart';
 import 'package:clean_point/features/main_screen/main_screen.dart';
 import 'package:clean_point/features/menu_list/view/contact_us_screen.dart';
@@ -45,57 +49,102 @@ class AppRouter {
           builder: (context) => OnBoardingScreen(),
           settings: settings,
         );
-        //! Auth Module
+      //! Auth Module
       case Routes.loginScreen:
         return MaterialPageRoute(
-          builder: (context) => BlocProvider(
-              create: (context) => AuthCubit(authRepository: getIt<AuthRepository>()),
-              child: LoginScreen()),
+          builder:
+              (context) => BlocProvider(
+                create:
+                    (context) =>
+                        AuthCubit(authRepository: getIt<AuthRepository>()),
+                child: LoginScreen(),
+              ),
           settings: settings,
         );
       case Routes.registerScreen:
         return MaterialPageRoute(
-          builder: (context) => BlocProvider(
-              create: (context) => AuthCubit(authRepository: getIt<AuthRepository>()),
-              child: SignUpScreen()),
+          builder:
+              (context) => BlocProvider(
+                create:
+                    (context) =>
+                        AuthCubit(authRepository: getIt<AuthRepository>()),
+                child: SignUpScreen(),
+              ),
           settings: settings,
         );
       case Routes.forgetScreen:
         return MaterialPageRoute(
-          builder: (context) => BlocProvider(
-              create: (context) => AuthCubit(authRepository: getIt<AuthRepository>()),
-              child: ForgetPasswordScreen()),
+          builder:
+              (context) => BlocProvider(
+                create:
+                    (context) =>
+                        AuthCubit(authRepository: getIt<AuthRepository>()),
+                child: ForgetPasswordScreen(),
+              ),
           settings: settings,
         );
       case Routes.otpPasswordCodeScreen:
         Map<String, dynamic> args = settings.arguments as Map<String, dynamic>;
         String phone = args["phone"] as String;
         return MaterialPageRoute(
-          builder: (context) => BlocProvider(
-              create: (context) => AuthCubit(authRepository: getIt<AuthRepository>()),
-              child: VerifyPasswordCodeScreen(phone: phone)),
+          builder:
+              (context) => BlocProvider(
+                create:
+                    (context) =>
+                        AuthCubit(authRepository: getIt<AuthRepository>()),
+                child: VerifyPasswordCodeScreen(phone: phone),
+              ),
           settings: settings,
         );
       case Routes.otpAccountCodeScreen:
         Map<String, dynamic> args = settings.arguments as Map<String, dynamic>;
         String phone = args["phone"] as String;
+        UserDataRequest? userDataRequest = args["user"] as UserDataRequest?;
         return MaterialPageRoute(
-          builder: (context) => BlocProvider(
-              create: (context) => AuthCubit(authRepository: getIt<AuthRepository>()),
-              child: VerifyAccountCodeScreen(phone: phone)),
+          builder:
+              (context) => BlocProvider(
+                create:
+                    (context) =>
+                        AuthCubit(authRepository: getIt<AuthRepository>()),
+                child: VerifyAccountCodeScreen(
+                  phone: phone,
+                  user: userDataRequest,
+                ),
+              ),
           settings: settings,
         );
       case Routes.changePassword:
         return MaterialPageRoute(
-          builder: (context) => BlocProvider(
-              create: (context) => AuthCubit(authRepository: getIt<AuthRepository>()),
-              child: ChangePasswordScreen()),
+          builder:
+              (context) => BlocProvider(
+                create:
+                    (context) =>
+                        AuthCubit(authRepository: getIt<AuthRepository>()),
+                child: ChangePasswordScreen(),
+              ),
           settings: settings,
         );
-        //! Home
+      case Routes.updatePassword:
+        return MaterialPageRoute(
+          builder:
+              (context) => BlocProvider(
+                create:
+                    (context) =>
+                        AuthCubit(authRepository: getIt<AuthRepository>()),
+                child: UpdatePasswordScreen(),
+              ),
+          settings: settings,
+        );
+      //! Home
       case Routes.mainScreen:
         return MaterialPageRoute(
-          builder: (context) => MainScreen(),
+          builder:
+              (context) => BlocProvider(
+                create:
+                    (context) =>
+                        AuthCubit(authRepository: getIt<AuthRepository>()),
+                child: MainScreen(),
+              ),
           settings: settings,
         );
       case Routes.contactUs:
@@ -115,7 +164,13 @@ class AppRouter {
         );
       case Routes.editProfile:
         return MaterialPageRoute(
-          builder: (context) => EditProfileScreen(),
+          builder:
+              (context) => BlocProvider(
+                create:
+                    (context) =>
+                        AuthCubit(authRepository: getIt<AuthRepository>()),
+                child: EditProfileScreen(),
+              ),
           settings: settings,
         );
       case Routes.walletScreen:
@@ -162,7 +217,7 @@ class AppRouter {
         Map<String, dynamic> args = settings.arguments as Map<String, dynamic>;
         int index = args["id"] as int;
         return MaterialPageRoute(
-          builder: (context) => DetailsRequestScreen(index: index,),
+          builder: (context) => DetailsRequestScreen(index: index),
           settings: settings,
         );
       case Routes.trackRequest:
@@ -171,8 +226,17 @@ class AppRouter {
           settings: settings,
         );
       case Routes.detailsPackage:
+        Map<String, dynamic> args = settings.arguments as Map<String, dynamic>;
+        int id = args["id"] as int;
         return MaterialPageRoute(
-          builder: (context) => DetailsPackageScreen(),
+          builder:
+              (context) => BlocProvider<HomeCubit>(
+                create:
+                    (context) =>
+                        HomeCubit(homeRepository: getIt<HomeRepository>())
+                          ..packageDetailsCubit(id: id),
+                child: DetailsPackageScreen(),
+              ),
           settings: settings,
         );
       default:

@@ -1,5 +1,9 @@
+import 'package:clean_point/core/di/di.dart';
 import 'package:clean_point/core/utils/extensions.dart';
+import 'package:clean_point/features/auth/cubit/auth_cubit.dart';
+import 'package:clean_point/features/auth/data/repository/auth_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 
 import '../../../core/shared/button_widget_with_text.dart';
@@ -7,6 +11,7 @@ import '../../../core/shared/text_filed_widget.dart';
 import '../../../core/style/app_color.dart';
 import '../../../core/style/app_font_style.dart';
 import '../../../core/utils/image_app.dart';
+import '../../../core/utils/toast.dart';
 import '../../../l10n/app_localizations.dart';
 
 class ContactUsScreen extends StatefulWidget {
@@ -163,39 +168,42 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // BlocConsumer<MoreCubit, MoreState>(
-            //   listener: (context, state) {
-            //     if (state is ContactUsSuccess) {
-            //       toastSuccess(message: state.message.toString());
-            //       context.pop();
-            //     }
-            //     if (state is ContactUsError) {
-            //       toastWarning(message: state.failure.message.toString());
-            //     }
-            //   },
-            //   builder: (context, state) {
-            //     if (state is ContactUsLoading) {
-            //       return CircularProgressIndicator(
-            //         color: AppColor.primaryColor,
-            //       ).center;
-            //     }
-            //     return
-                  ButtonWidgetWithText(
-                  onPressed: () async {
-                    if (formKey.currentState!.validate()) {
-                      // await context.read<MoreCubit>().contactUsCubit(
-                      //   name: usernameController.text,
-                      //   email: emailController.text,
-                      //   phone: phoneController.text,
-                      //   message: messageController.text,
-                      // );
-                    }
-                  },
-                  txt: (checkLang == "ar") ? "ارسال" : "Send",
-                  backgroundColor: AppColor.primaryColor,
-                ),
-            //   },
-            // ),
+            BlocProvider(
+              create: (context) => AuthCubit(authRepository: getIt<AuthRepository>()),
+              child: BlocConsumer<AuthCubit, AuthState>(
+                listener: (context, state) {
+                  if (state is ContactUsSuccess) {
+                    toastSuccess(message: state.message.toString());
+                    context.pop();
+                  }
+                  if (state is ContactUsError) {
+                    toastWarning(message: state.failure.message.toString());
+                  }
+                },
+                builder: (context, state) {
+                  if (state is ContactUsLoading) {
+                    return CircularProgressIndicator(
+                      color: AppColor.primaryColor,
+                    ).center;
+                  }
+                  return
+                    ButtonWidgetWithText(
+                    onPressed: () async {
+                      if (formKey.currentState!.validate()) {
+                        await context.read<AuthCubit>().contactUsCubit(
+                          name: usernameController.text,
+                          email: emailController.text,
+                          phone: phoneController.text,
+                          message: messageController.text,
+                        );
+                      }
+                    },
+                    txt: (checkLang == "ar") ? "ارسال" : "Send",
+                    backgroundColor: AppColor.primaryColor,
+                  );
+                },
+              ),
+            ),
 
             15.ph,
           ],
